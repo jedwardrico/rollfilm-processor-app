@@ -32,7 +32,10 @@ const barStyles = StyleSheet.create({
 function ChemCard({ chem, onIncrement }: { chem: Chemical; onIncrement: () => void }) {
   const exhausted = chem.capacity_rolls != null && chem.rolls_processed >= chem.capacity_rolls;
   return (
-    <View style={[styles.card, !chem.active && styles.cardInactive]}>
+    <Pressable
+      style={({ pressed }) => [styles.card, !chem.active && styles.cardInactive, pressed && styles.cardPressed]}
+      onPress={() => router.push(`/chemicals/${chem.id}`)}
+    >
       <View style={styles.cardHeader}>
         <View>
           <Text style={styles.chemName}>{chem.name}</Text>
@@ -53,7 +56,7 @@ function ChemCard({ chem, onIncrement }: { chem: Chemical; onIncrement: () => vo
       <UsageBar rolls={chem.rolls_processed} cap={chem.capacity_rolls} />
       {chem.date_mixed && <Text style={styles.date}>Mixed {chem.date_mixed}</Text>}
       {chem.expiry_date && <Text style={styles.date}>Expires {chem.expiry_date}</Text>}
-    </View>
+    </Pressable>
   );
 }
 
@@ -117,6 +120,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardInactive: { opacity: 0.5 },
+  cardPressed: { opacity: 0.7 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   chemName: { fontSize: 16, fontWeight: '600', color: '#111' },
   chemMeta: { fontSize: 13, color: '#6b7280', marginTop: 2 },
