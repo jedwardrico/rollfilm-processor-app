@@ -6,7 +6,13 @@ import { router } from 'expo-router';
 import { api } from '../../src/api/client';
 import { FilmStock, Process, RollFormat } from '../../src/types';
 
-const FORMATS: RollFormat[] = ['135', '120', '4x5', 'other'];
+const FORMATS: RollFormat[] = ['135', '120', '127', '220', '4x5', 'other'];
+const FORMAT_LABELS: Record<RollFormat, string> = {
+  '135': '35mm', '120': '120', '127': '127', '220': '220', '4x5': '4x5', 'other': 'other',
+};
+const FORMAT_DEFAULT_FRAMES: Record<RollFormat, number | undefined> = {
+  '135': 36, '120': 8, '127': 8, '220': 16, '4x5': 1, 'other': undefined,
+};
 
 export default function NewRollScreen() {
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -16,7 +22,7 @@ export default function NewRollScreen() {
   const [stockSearch, setStockSearch] = useState('');
   const [format, setFormat] = useState<RollFormat>('135');
   const [processId, setProcessId] = useState('C41');
-  const [frames, setFrames] = useState('36');
+  const [exposures, setExposures] = useState('36');
   const [dateShot, setDateShot] = useState(() => new Date().toISOString().split('T')[0]);
   const [pushPull, setPushPull] = useState('0');
   const [notes, setNotes] = useState('');
@@ -52,7 +58,7 @@ export default function NewRollScreen() {
         film_stock: selectedStock.name,
         format,
         process_id: processId,
-        frames: frames ? Number(frames) : undefined,
+        exposures: exposures ? Number(exposures) : undefined,
         date_shot: dateShot || undefined,
         push_pull: Number(pushPull),
         notes: notes || undefined,
@@ -87,8 +93,12 @@ export default function NewRollScreen() {
       <Field label="Format">
         <View style={styles.pills}>
           {FORMATS.map(f => (
-            <Pressable key={f} style={[styles.pill, format === f && styles.pillActive]} onPress={() => setFormat(f)}>
-              <Text style={[styles.pillText, format === f && styles.pillTextActive]}>{f}mm</Text>
+            <Pressable key={f} style={[styles.pill, format === f && styles.pillActive]} onPress={() => {
+              setFormat(f);
+              const def = FORMAT_DEFAULT_FRAMES[f];
+              setExposures(def !== undefined ? String(def) : '');
+            }}>
+              <Text style={[styles.pillText, format === f && styles.pillTextActive]}>{FORMAT_LABELS[f]}</Text>
             </Pressable>
           ))}
         </View>
@@ -104,8 +114,8 @@ export default function NewRollScreen() {
         </View>
       </Field>
 
-      <Field label="Frames">
-        <TextInput style={styles.input} value={frames} onChangeText={setFrames}
+      <Field label="Exposures">
+        <TextInput style={styles.input} value={exposures} onChangeText={setExposures}
           keyboardType="numeric" placeholder="36" placeholderTextColor="#aaa" />
       </Field>
 

@@ -91,7 +91,7 @@ export default function RollDetailScreen() {
         <InfoRow label="Film" value={roll.film_stock} />
         <InfoRow label="Format" value={`${roll.format}mm`} />
         <InfoRow label="Process" value={roll.process_name} />
-        <InfoRow label="Frames" value={roll.frames} />
+        <InfoRow label="Exposures" value={roll.exposures} />
         <InfoRow label="Date Shot" value={roll.date_shot} />
         <InfoRow label="Date Processed" value={roll.date_processed} />
         <InfoRow label="Date Scanned" value={roll.date_scanned} />
