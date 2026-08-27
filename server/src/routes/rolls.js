@@ -53,7 +53,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { film_stock_id, format, process_id, frames, date_shot, notes, binder_location, push_pull } = req.body;
+  const { film_stock_id, format, process_id, exposures, date_shot, notes, binder_location, push_pull } = req.body;
   let { film_stock } = req.body;
 
   if (!format || !process_id) return res.status(400).json({ error: 'format and process_id required' });
@@ -70,9 +70,9 @@ router.post('/', (req, res) => {
 
   const human_id = generateHumanId(process_id);
   const result = db.prepare(`
-    INSERT INTO rolls (human_id, film_stock, film_stock_id, format, process_id, frames, date_shot, notes, binder_location, push_pull)
+    INSERT INTO rolls (human_id, film_stock, film_stock_id, format, process_id, exposures, date_shot, notes, binder_location, push_pull)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(human_id, film_stock, film_stock_id ?? null, format, process_id, frames ?? null, date_shot ?? null, notes ?? null, binder_location ?? null, push_pull ?? 0);
+  `).run(human_id, film_stock, film_stock_id ?? null, format, process_id, exposures ?? null, date_shot ?? null, notes ?? null, binder_location ?? null, push_pull ?? 0);
 
   res.status(201).json(db.prepare('SELECT r.*, p.name as process_name FROM rolls r JOIN processes p ON r.process_id = p.id WHERE r.id = ?').get(result.lastInsertRowid));
 });
@@ -81,7 +81,7 @@ router.patch('/:id', (req, res) => {
   const roll = db.prepare('SELECT * FROM rolls WHERE id = ? OR human_id = ?').get(req.params.id, req.params.id);
   if (!roll) return res.status(404).json({ error: 'Not found' });
 
-  const allowed = ['film_stock', 'film_stock_id', 'format', 'frames', 'date_shot', 'date_processed', 'date_scanned', 'status', 'chemical_id', 'procedure_id', 'push_pull', 'notes', 'binder_location'];
+  const allowed = ['film_stock', 'film_stock_id', 'format', 'exposures', 'date_shot', 'date_processed', 'date_scanned', 'status', 'chemical_id', 'procedure_id', 'push_pull', 'notes', 'binder_location'];
   const fields = [];
   const values = [];
   for (const key of allowed) {
