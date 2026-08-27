@@ -39,6 +39,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="film-stocks"
+        options={{
+          title: 'Film',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🎬" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="stats"
         options={{
           title: 'Stats',
