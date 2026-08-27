@@ -5,7 +5,7 @@ file_include_globs = ["app/.env", "server/.env"]
 
 [scripts]
 # Install deps at all three levels, then seed the workspace-local DB
-setup = "source ~/.nvm/nvm.sh && nvm use && npm install && npm install --prefix server && npm install --prefix app && DB_PATH=$CONDUCTOR_WORKSPACE_PATH/data/rollfilm.db node server/src/db/migrate.js"
+setup = "export PATH=$(ls -d $HOME/.nvm/versions/node/v22.*/bin | sort -V | tail -1):$PATH && npm install && npm install --prefix server && npm install --prefix app && DB_PATH=$CONDUCTOR_WORKSPACE_PATH/data/rollfilm.db node server/src/db/migrate.js"
 
 # iOS simulator can only show one workspace at a time; Metro defaults to 8081
 run_mode = "nonconcurrent"
