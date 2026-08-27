@@ -23,10 +23,11 @@ export const api = {
   },
 
   chemicals: {
-    list: (params?: { process_id?: string; active?: boolean }) => {
+    list: (params?: { process_id?: string; active?: boolean; role?: string }) => {
       const q = new URLSearchParams();
       if (params?.process_id) q.set('process_id', params.process_id);
       if (params?.active !== undefined) q.set('active', String(params.active));
+      if (params?.role) q.set('role', params.role);
       return request<Chemical[]>(`/api/chemicals?${q}`);
     },
     get: (id: number) => request<Chemical>(`/api/chemicals/${id}`),
@@ -37,6 +38,7 @@ export const api = {
   },
 
   rolls: {
+    filmStocks: () => request<string[]>('/api/rolls/film-stocks'),
     list: (params?: { process_id?: string; status?: string; format?: string }) => {
       const q = new URLSearchParams();
       if (params?.process_id) q.set('process_id', params.process_id);
@@ -62,6 +64,8 @@ export const api = {
       request<Procedure>('/api/procedures', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: number, body: Partial<Procedure> & { steps?: Partial<Procedure['steps'][0]>[] }) =>
       request<Procedure>(`/api/procedures/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    run: (id: number, body: { roll_count: number; run_date?: string; notes?: string }) =>
+      request<Procedure>(`/api/procedures/${id}/run`, { method: 'POST', body: JSON.stringify(body) }),
     delete: (id: number) => request<void>(`/api/procedures/${id}`, { method: 'DELETE' }),
   },
 

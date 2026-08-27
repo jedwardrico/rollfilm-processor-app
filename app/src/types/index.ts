@@ -56,6 +56,8 @@ export interface ProcedureStep {
   temperature_c?: number;
   agitation_notes?: string;
   chemical_role?: string;
+  chemical_id?: number;
+  chemical_name?: string;
 }
 
 export interface Stats {
@@ -91,5 +93,6 @@ export interface Procedure {
   push_pull: number;
   notes?: string;
   steps: ProcedureStep[];
+  rolls_processed: number;
   created_at: string;
 }
