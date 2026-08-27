@@ -21,7 +21,10 @@ function ProcedureCard({ proc }: { proc: Procedure }) {
         <Text style={styles.procName}>{proc.name}</Text>
         <Text style={styles.totalTime}>{formatDuration(totalSeconds)}</Text>
       </View>
-      <Text style={styles.procMeta}>{proc.process_name}</Text>
+      <View style={styles.metaRow}>
+        <Text style={styles.procMeta}>{proc.process_name}</Text>
+        <Text style={styles.rollCount}>{proc.rolls_processed} {proc.rolls_processed === 1 ? 'roll' : 'rolls'}</Text>
+      </View>
       {proc.film_stock && <Text style={styles.sub}>{proc.film_stock}</Text>}
       {proc.developer && <Text style={styles.sub}>Developer: {proc.developer}</Text>}
       {proc.temperature_c != null && <Text style={styles.sub}>{proc.temperature_c}°C</Text>}
@@ -92,7 +95,9 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   procName: { fontSize: 16, fontWeight: '600', color: '#111', flex: 1 },
   totalTime: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
-  procMeta: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  procMeta: { fontSize: 13, color: '#6b7280' },
+  rollCount: { fontSize: 12, color: '#9ca3af', fontVariant: ['tabular-nums'] },
   sub: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   steps: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   stepPill: { backgroundColor: '#f3f4f6', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },

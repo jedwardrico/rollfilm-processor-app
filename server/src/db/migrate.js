@@ -73,7 +73,17 @@ db.exec(`
     duration_seconds INTEGER NOT NULL,
     temperature_c REAL,
     agitation_notes TEXT,
-    chemical_role TEXT
+    chemical_role TEXT,
+    chemical_id INTEGER REFERENCES chemicals(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS procedure_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    procedure_id INTEGER NOT NULL REFERENCES procedures(id) ON DELETE CASCADE,
+    roll_count INTEGER NOT NULL DEFAULT 1,
+    run_date TEXT NOT NULL DEFAULT (date('now')),
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS roll_sequences (
@@ -82,6 +92,11 @@ db.exec(`
     sequence INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+// Add chemical_id to procedure_steps if upgrading from an older schema
+try {
+  db.prepare('ALTER TABLE procedure_steps ADD COLUMN chemical_id INTEGER REFERENCES chemicals(id) ON DELETE SET NULL').run();
+} catch { /* column already exists */ }
 
 // Seed default processes
 const insertProcess = db.prepare(

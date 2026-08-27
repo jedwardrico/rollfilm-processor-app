@@ -18,6 +18,13 @@ function generateHumanId(processId) {
   return `${processId}-${year}-${String(seq).padStart(3, '0')}`;
 }
 
+router.get('/film-stocks', (req, res) => {
+  const rows = db.prepare(
+    'SELECT DISTINCT film_stock FROM rolls ORDER BY film_stock ASC'
+  ).all();
+  res.json(rows.map(r => r.film_stock));
+});
+
 router.get('/', (req, res) => {
   const { process_id, status, format } = req.query;
   let sql = `
@@ -86,10 +93,25 @@ router.post('/:id/process', (req, res) => {
   const now = new Date().toISOString().split('T')[0];
 
   db.transaction(() => {
+    const resolvedProcedureId = procedure_id ?? roll.procedure_id;
     db.prepare('UPDATE rolls SET status = ?, date_processed = ?, chemical_id = ?, procedure_id = ? WHERE id = ?')
-      .run('processed', now, chemical_id ?? roll.chemical_id, procedure_id ?? roll.procedure_id, roll.id);
+      .run('processed', now, chemical_id ?? roll.chemical_id, resolvedProcedureId, roll.id);
+
+    // Increment the manually selected chemical (if any)
     if (chemical_id) {
       db.prepare('UPDATE chemicals SET rolls_processed = rolls_processed + 1 WHERE id = ?').run(chemical_id);
+    }
+
+    // Increment every chemical assigned to steps of the procedure
+    if (resolvedProcedureId) {
+      const stepChemicals = db.prepare(
+        'SELECT DISTINCT chemical_id FROM procedure_steps WHERE procedure_id = ? AND chemical_id IS NOT NULL'
+      ).all(resolvedProcedureId);
+      const incr = db.prepare('UPDATE chemicals SET rolls_processed = rolls_processed + 1 WHERE id = ?');
+      for (const { chemical_id: cid } of stepChemicals) {
+        // Avoid double-counting if the same chemical was also selected manually
+        if (cid !== chemical_id) incr.run(cid);
+      }
     }
   })();
 

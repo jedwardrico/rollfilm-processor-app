@@ -4,11 +4,12 @@ import db from '../db/index.js';
 const router = Router();
 
 router.get('/', (req, res) => {
-  const { process_id, active } = req.query;
+  const { process_id, active, role } = req.query;
   let sql = 'SELECT c.*, p.name as process_name FROM chemicals c JOIN processes p ON c.process_id = p.id WHERE 1=1';
   const params = [];
   if (process_id) { sql += ' AND c.process_id = ?'; params.push(process_id); }
   if (active !== undefined) { sql += ' AND c.active = ?'; params.push(active === 'true' ? 1 : 0); }
+  if (role) { sql += ' AND c.role = ?'; params.push(role); }
   sql += ' ORDER BY c.created_at DESC';
   res.json(db.prepare(sql).all(...params));
 });

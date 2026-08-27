@@ -56,6 +56,9 @@ export default function ProcedureDetailScreen() {
           </Text>
         )}
         <Text style={styles.totalTime}>Total: {formatDuration(totalSeconds)}</Text>
+        <Text style={styles.rollCount}>
+          {procedure.rolls_processed} {procedure.rolls_processed === 1 ? 'roll' : 'rolls'} processed
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -65,6 +68,7 @@ export default function ProcedureDetailScreen() {
             <View style={styles.stepNum}><Text style={styles.stepNumText}>{i + 1}</Text></View>
             <View style={styles.stepInfo}>
               <Text style={styles.stepName}>{step.name}</Text>
+              {step.chemical_name && <Text style={[styles.stepSub, styles.stepChemical]}>🧪 {step.chemical_name}</Text>}
               {step.temperature_c != null && <Text style={styles.stepSub}>{step.temperature_c}°C</Text>}
               {step.agitation_notes && <Text style={styles.stepSub}>{step.agitation_notes}</Text>}
             </View>
@@ -108,6 +112,7 @@ const styles = StyleSheet.create({
   meta: { fontSize: 14, color: '#6b7280', marginTop: 2 },
   sub: { fontSize: 13, color: '#9ca3af' },
   totalTime: { fontSize: 14, fontWeight: '700', color: '#1a1a1a', marginTop: 8 },
+  rollCount: { fontSize: 13, color: '#6b7280' },
   section: {
     backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
@@ -123,6 +128,7 @@ const styles = StyleSheet.create({
   stepInfo: { flex: 1, gap: 2 },
   stepName: { fontSize: 15, fontWeight: '600', color: '#111' },
   stepSub: { fontSize: 12, color: '#6b7280' },
+  stepChemical: { color: '#059669', fontWeight: '500' },
   stepDuration: { fontSize: 14, fontWeight: '700', color: '#374151', fontVariant: ['tabular-nums'] },
   notes: { fontSize: 14, color: '#374151', lineHeight: 20 },
   timerBtn: {

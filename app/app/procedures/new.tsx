@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { api } from '../../src/api/client';
-import { Process } from '../../src/types';
+import { Chemical, Process } from '../../src/types';
+import { SelectModal, SelectTrigger } from '../../src/components/SelectModal';
 
 interface StepDraft {
   key: number;
@@ -10,6 +11,8 @@ interface StepDraft {
   duration_seconds: string;
   temperature_c: string;
   agitation_notes: string;
+  chemical_id?: number;
+  chemical_name?: string;
 }
 
 let stepKey = 0;
@@ -19,20 +22,37 @@ function newStep(): StepDraft {
 
 export default function NewProcedureScreen() {
   const [processes, setProcesses] = useState<Process[]>([]);
+  const [chemicals, setChemicals] = useState<Chemical[]>([]);
+  const [filmStocks, setFilmStocks] = useState<string[]>([]);
+
   const [name, setName] = useState('');
   const [processId, setProcessId] = useState('BW');
   const [filmStock, setFilmStock] = useState('');
-  const [developer, setDeveloper] = useState('');
   const [temperature, setTemperature] = useState('20');
   const [pushPull, setPushPull] = useState('0');
   const [notes, setNotes] = useState('');
   const [steps, setSteps] = useState<StepDraft[]>([newStep()]);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { api.processes.list().then(setProcesses).catch(console.error); }, []);
+  const [filmStockOpen, setFilmStockOpen] = useState(false);
+  // Key of the step currently picking a chemical (null = closed)
+  const [chemPickerStepKey, setChemPickerStepKey] = useState<number | null>(null);
 
-  function updateStep(key: number, field: keyof StepDraft, value: string) {
-    setSteps(prev => prev.map(s => s.key === key ? { ...s, [field]: value } : s));
+  useEffect(() => {
+    api.processes.list().then(setProcesses).catch(console.error);
+    api.rolls.filmStocks().then(setFilmStocks).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    api.chemicals.list({ active: true, process_id: processId })
+      .then(setChemicals)
+      .catch(console.error);
+    // Clear chemical selections when process changes
+    setSteps(prev => prev.map(s => ({ ...s, chemical_id: undefined, chemical_name: undefined })));
+  }, [processId]);
+
+  function updateStep(key: number, patch: Partial<StepDraft>) {
+    setSteps(prev => prev.map(s => s.key === key ? { ...s, ...patch } : s));
   }
 
   function addStep() { setSteps(prev => [...prev, newStep()]); }
@@ -47,7 +67,6 @@ export default function NewProcedureScreen() {
         name: name.trim(),
         process_id: processId,
         film_stock: filmStock || undefined,
-        developer: developer || undefined,
         temperature_c: temperature ? Number(temperature) : undefined,
         push_pull: Number(pushPull),
         notes: notes || undefined,
@@ -57,6 +76,7 @@ export default function NewProcedureScreen() {
           duration_seconds: Number(s.duration_seconds) || 60,
           temperature_c: s.temperature_c ? Number(s.temperature_c) : undefined,
           agitation_notes: s.agitation_notes || undefined,
+          chemical_id: s.chemical_id,
         })),
       });
       router.back();
@@ -66,6 +86,15 @@ export default function NewProcedureScreen() {
       setSaving(false);
     }
   }
+
+  const filmStockOptions = filmStocks.map(f => ({ label: f, value: f }));
+  const chemOptions = chemicals.map(c => ({
+    label: `${c.name}  (${c.role})`,
+    value: String(c.id),
+  }));
+  const activePickerStep = chemPickerStepKey !== null
+    ? steps.find(s => s.key === chemPickerStepKey)
+    : null;
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -85,15 +114,12 @@ export default function NewProcedureScreen() {
         </View>
       </Field>
 
-      <Field label="Film Stock">
-        <TextInput style={styles.input} value={filmStock} onChangeText={setFilmStock}
-          placeholder="e.g. Ilford HP5 Plus" placeholderTextColor="#aaa" />
-      </Field>
-
-      <Field label="Developer">
-        <TextInput style={styles.input} value={developer} onChangeText={setDeveloper}
-          placeholder="e.g. HC-110 Dilution B" placeholderTextColor="#aaa" />
-      </Field>
+      <SelectTrigger
+        label="Film Stock"
+        value={filmStock}
+        placeholder="Select or type a film stock…"
+        onPress={() => setFilmStockOpen(true)}
+      />
 
       <View style={styles.row}>
         <View style={{ flex: 1 }}>
@@ -128,24 +154,51 @@ export default function NewProcedureScreen() {
               </Pressable>
             )}
           </View>
-          <TextInput style={styles.input} value={step.name} onChangeText={v => updateStep(step.key, 'name', v)}
-            placeholder="Step name (e.g. Developer)" placeholderTextColor="#aaa" />
+
+          <TextInput
+            style={styles.input}
+            value={step.name}
+            onChangeText={v => updateStep(step.key, { name: v })}
+            placeholder="Step name (e.g. Developer)"
+            placeholderTextColor="#aaa"
+          />
+
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <Text style={styles.subLabel}>Duration (s)</Text>
               <TextInput style={styles.input} value={step.duration_seconds}
-                onChangeText={v => updateStep(step.key, 'duration_seconds', v)}
+                onChangeText={v => updateStep(step.key, { duration_seconds: v })}
                 keyboardType="numeric" placeholder="60" placeholderTextColor="#aaa" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.subLabel}>Temp (°C)</Text>
               <TextInput style={styles.input} value={step.temperature_c}
-                onChangeText={v => updateStep(step.key, 'temperature_c', v)}
+                onChangeText={v => updateStep(step.key, { temperature_c: v })}
                 keyboardType="numeric" placeholder="Optional" placeholderTextColor="#aaa" />
             </View>
           </View>
+
+          {/* Chemical picker */}
+          <Pressable
+            style={[styles.chemPicker, step.chemical_id && styles.chemPickerSelected]}
+            onPress={() => setChemPickerStepKey(step.key)}
+          >
+            <Text style={[styles.chemPickerText, !step.chemical_id && styles.chemPickerPlaceholder]}>
+              {step.chemical_name ?? (chemicals.length ? 'Assign chemical…' : 'No chemicals logged for this process')}
+            </Text>
+            {step.chemical_id && (
+              <Pressable
+                hitSlop={8}
+                onPress={() => updateStep(step.key, { chemical_id: undefined, chemical_name: undefined })}
+              >
+                <Text style={styles.clearBtn}>✕</Text>
+              </Pressable>
+            )}
+            {!step.chemical_id && <Text style={styles.chemChevron}>›</Text>}
+          </Pressable>
+
           <TextInput style={styles.input} value={step.agitation_notes}
-            onChangeText={v => updateStep(step.key, 'agitation_notes', v)}
+            onChangeText={v => updateStep(step.key, { agitation_notes: v })}
             placeholder="Agitation notes (optional)" placeholderTextColor="#aaa" />
         </View>
       ))}
@@ -162,6 +215,31 @@ export default function NewProcedureScreen() {
       <Pressable style={[styles.saveBtn, saving && styles.saveBtnDisabled]} onPress={save} disabled={saving}>
         <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save Procedure'}</Text>
       </Pressable>
+
+      {/* Film stock modal */}
+      <SelectModal
+        visible={filmStockOpen}
+        title="Film Stock"
+        options={filmStockOptions}
+        selected={filmStock}
+        allowCustom
+        onSelect={setFilmStock}
+        onClose={() => setFilmStockOpen(false)}
+      />
+
+      {/* Per-step chemical modal */}
+      <SelectModal
+        visible={chemPickerStepKey !== null}
+        title={activePickerStep ? `Chemical for Step ${steps.indexOf(activePickerStep) + 1}` : 'Chemical'}
+        options={chemOptions}
+        selected={activePickerStep?.chemical_id ? String(activePickerStep.chemical_id) : undefined}
+        onSelect={value => {
+          if (chemPickerStepKey === null) return;
+          const chem = chemicals.find(c => c.id === Number(value));
+          if (chem) updateStep(chemPickerStepKey, { chemical_id: chem.id, chemical_name: chem.name });
+        }}
+        onClose={() => setChemPickerStepKey(null)}
+      />
     </ScrollView>
   );
 }
@@ -207,6 +285,16 @@ const styles = StyleSheet.create({
   stepCardHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   stepNum: { fontSize: 13, fontWeight: '700', color: '#374151' },
   removeText: { fontSize: 13, color: '#ef4444' },
+  chemPicker: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#f9fafb', borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: '#e5e7eb',
+  },
+  chemPickerSelected: { borderColor: '#1a1a1a', backgroundColor: '#f0fdf4' },
+  chemPickerText: { flex: 1, fontSize: 14, color: '#111' },
+  chemPickerPlaceholder: { color: '#aaa' },
+  chemChevron: { fontSize: 20, color: '#9ca3af', lineHeight: 22 },
+  clearBtn: { fontSize: 13, color: '#9ca3af', paddingHorizontal: 4 },
   addStepBtn: {
     borderWidth: 1, borderColor: '#d1d5db', borderStyle: 'dashed',
     borderRadius: 10, padding: 14, alignItems: 'center',
