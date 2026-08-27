@@ -13,6 +13,17 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS film_stocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    brand TEXT NOT NULL,
+    name TEXT NOT NULL,
+    iso INTEGER,
+    process_id TEXT NOT NULL REFERENCES processes(id),
+    notes TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS processes (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -45,6 +56,7 @@ db.exec(`
     date_processed TEXT,
     date_scanned TEXT,
     status TEXT NOT NULL DEFAULT 'shot' CHECK(status IN ('shot','processing','processed','scanning','scanned','archived')),
+    film_stock_id INTEGER REFERENCES film_stocks(id),
     chemical_id INTEGER REFERENCES chemicals(id),
     procedure_id INTEGER,
     push_pull INTEGER NOT NULL DEFAULT 0,
@@ -98,6 +110,11 @@ try {
   db.prepare('ALTER TABLE procedure_steps ADD COLUMN chemical_id INTEGER REFERENCES chemicals(id) ON DELETE SET NULL').run();
 } catch { /* column already exists */ }
 
+// Add film_stock_id to rolls if upgrading from an older schema
+try {
+  db.prepare('ALTER TABLE rolls ADD COLUMN film_stock_id INTEGER REFERENCES film_stocks(id)').run();
+} catch { /* column already exists */ }
+
 // Seed default processes
 const insertProcess = db.prepare(
   'INSERT OR IGNORE INTO processes (id, name, description) VALUES (?, ?, ?)'
@@ -107,6 +124,42 @@ insertProcess.run('BW', 'Black & White', 'Black and white negative process');
 insertProcess.run('E6', 'E-6', 'Color reversal (slide) film process');
 insertProcess.run('ECN2', 'ECN-2', 'Motion picture color negative process');
 insertProcess.run('RA4', 'RA-4', 'Color photographic paper process');
+
+// Seed common film stocks
+const insertStock = db.prepare(
+  'INSERT OR IGNORE INTO film_stocks (id, brand, name, iso, process_id) VALUES (?, ?, ?, ?, ?)'
+);
+// C-41 color negative
+insertStock.run(1,  'Kodak',   'Kodak Portra 160',      160,  'C41');
+insertStock.run(2,  'Kodak',   'Kodak Portra 400',      400,  'C41');
+insertStock.run(3,  'Kodak',   'Kodak Portra 800',      800,  'C41');
+insertStock.run(4,  'Kodak',   'Kodak Gold 200',        200,  'C41');
+insertStock.run(5,  'Kodak',   'Kodak ColorPlus 200',   200,  'C41');
+insertStock.run(6,  'Kodak',   'Kodak Ultramax 400',    400,  'C41');
+insertStock.run(7,  'Kodak',   'Kodak Ektar 100',       100,  'C41');
+insertStock.run(8,  'Fujifilm','Fujifilm Superia 400',  400,  'C41');
+insertStock.run(9,  'Fujifilm','Fujifilm Superia 800',  800,  'C41');
+insertStock.run(10, 'Fujifilm','Fujifilm Pro 400H',     400,  'C41');
+insertStock.run(11, 'Fujifilm','Fujifilm Velvia 50',    50,   'E6');
+insertStock.run(12, 'Fujifilm','Fujifilm Velvia 100',   100,  'E6');
+insertStock.run(13, 'Fujifilm','Fujifilm Provia 100F',  100,  'E6');
+// Black & white
+insertStock.run(14, 'Ilford',  'Ilford HP5 Plus',       400,  'BW');
+insertStock.run(15, 'Ilford',  'Ilford FP4 Plus',       125,  'BW');
+insertStock.run(16, 'Ilford',  'Ilford Delta 100',      100,  'BW');
+insertStock.run(17, 'Ilford',  'Ilford Delta 400',      400,  'BW');
+insertStock.run(18, 'Ilford',  'Ilford Delta 3200',     3200, 'BW');
+insertStock.run(19, 'Ilford',  'Ilford Pan F Plus',     50,   'BW');
+insertStock.run(20, 'Kodak',   'Kodak Tri-X 400',       400,  'BW');
+insertStock.run(21, 'Kodak',   'Kodak T-Max 100',       100,  'BW');
+insertStock.run(22, 'Kodak',   'Kodak T-Max 400',       400,  'BW');
+insertStock.run(23, 'Fomapan', 'Fomapan 100',           100,  'BW');
+insertStock.run(24, 'Fomapan', 'Fomapan 200',           200,  'BW');
+insertStock.run(25, 'Fomapan', 'Fomapan 400',           400,  'BW');
+insertStock.run(26, 'Rollei',  'Rollei Superpan 200',   200,  'BW');
+insertStock.run(27, 'Cinestill','Cinestill 800T',        800,  'C41');
+insertStock.run(28, 'Cinestill','Cinestill 400D',        400,  'C41');
+insertStock.run(29, 'Cinestill','Cinestill 50D',         50,   'C41');
 
 // Seed default C41 procedure
 const insertProc = db.prepare(

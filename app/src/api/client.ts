@@ -1,4 +1,4 @@
-import { Chemical, Process, Procedure, Roll, Stats } from '../types';
+import { Chemical, FilmStock, Process, Procedure, Roll, Stats } from '../types';
 
 // Update this to your NAS IP/hostname when deploying
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -35,6 +35,19 @@ export const api = {
     update: (id: number, body: Partial<Chemical>) => request<Chemical>(`/api/chemicals/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     increment: (id: number) => request<Chemical>(`/api/chemicals/${id}/increment`, { method: 'POST' }),
     delete: (id: number) => request<void>(`/api/chemicals/${id}`, { method: 'DELETE' }),
+  },
+
+  filmStocks: {
+    list: (params?: { process_id?: string; active?: boolean }) => {
+      const q = new URLSearchParams();
+      if (params?.process_id) q.set('process_id', params.process_id);
+      if (params?.active !== undefined) q.set('active', String(params.active));
+      return request<FilmStock[]>(`/api/film-stocks?${q}`);
+    },
+    get: (id: number) => request<FilmStock>(`/api/film-stocks/${id}`),
+    create: (body: Partial<FilmStock>) => request<FilmStock>('/api/film-stocks', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: number, body: Partial<FilmStock>) => request<FilmStock>(`/api/film-stocks/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: (id: number) => request<void>(`/api/film-stocks/${id}`, { method: 'DELETE' }),
   },
 
   rolls: {

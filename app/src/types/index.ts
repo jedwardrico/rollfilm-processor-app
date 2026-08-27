@@ -1,5 +1,17 @@
 export type ProcessId = 'C41' | 'BW' | 'E6' | 'ECN2' | 'RA4' | string;
 
+export interface FilmStock {
+  id: number;
+  brand: string;
+  name: string;
+  iso?: number;
+  process_id: ProcessId;
+  process_name: string;
+  notes?: string;
+  active: number;
+  created_at: string;
+}
+
 export interface Process {
   id: ProcessId;
   name: string;
@@ -39,6 +51,7 @@ export interface Roll {
   date_processed?: string;
   date_scanned?: string;
   status: RollStatus;
+  film_stock_id?: number;
   chemical_id?: number;
   procedure_id?: number;
   push_pull: number;

@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { router } from 'expo-router';
 import { api } from '../../src/api/client';
-import { Process, RollFormat } from '../../src/types';
+import { FilmStock, Process, RollFormat } from '../../src/types';
 
 const FORMATS: RollFormat[] = ['135', '120', '4x5', 'other'];
 
 export default function NewRollScreen() {
   const [processes, setProcesses] = useState<Process[]>([]);
-  const [filmStock, setFilmStock] = useState('');
+  const [filmStocks, setFilmStocks] = useState<FilmStock[]>([]);
+  const [selectedStock, setSelectedStock] = useState<FilmStock | null>(null);
+  const [stockModalVisible, setStockModalVisible] = useState(false);
+  const [stockSearch, setStockSearch] = useState('');
   const [format, setFormat] = useState<RollFormat>('135');
   const [processId, setProcessId] = useState('C41');
   const [frames, setFrames] = useState('36');
@@ -22,14 +25,31 @@ export default function NewRollScreen() {
 
   useEffect(() => {
     api.processes.list().then(setProcesses).catch(console.error);
+    api.filmStocks.list({ active: true }).then(setFilmStocks).catch(console.error);
   }, []);
 
+  const filteredStocks = useMemo(() => {
+    const q = stockSearch.toLowerCase().trim();
+    if (!q) return filmStocks;
+    return filmStocks.filter(s =>
+      s.name.toLowerCase().includes(q) || s.brand.toLowerCase().includes(q)
+    );
+  }, [filmStocks, stockSearch]);
+
+  function pickStock(stock: FilmStock) {
+    setSelectedStock(stock);
+    setProcessId(stock.process_id);
+    setStockModalVisible(false);
+    setStockSearch('');
+  }
+
   async function save() {
-    if (!filmStock.trim()) { Alert.alert('Film stock is required'); return; }
+    if (!selectedStock) { Alert.alert('Film stock is required'); return; }
     setSaving(true);
     try {
       await api.rolls.create({
-        film_stock: filmStock.trim(),
+        film_stock_id: selectedStock.id,
+        film_stock: selectedStock.name,
         format,
         process_id: processId,
         frames: frames ? Number(frames) : undefined,
@@ -48,10 +68,21 @@ export default function NewRollScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Field label="Film Stock *">
-        <TextInput style={styles.input} value={filmStock} onChangeText={setFilmStock}
-          placeholder="e.g. Kodak Portra 400" placeholderTextColor="#aaa" />
-      </Field>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>Film Stock *</Text>
+        <Pressable style={[styles.stockTrigger, !selectedStock && styles.stockTriggerEmpty]} onPress={() => setStockModalVisible(true)}>
+          {selectedStock ? (
+            <View style={styles.stockInfo}>
+              <Text style={styles.stockName}>{selectedStock.name}</Text>
+              <Text style={styles.stockMeta}>ISO {selectedStock.iso ?? '?'} · {selectedStock.process_name}</Text>
+            </View>
+          ) : (
+            <Text style={styles.stockPlaceholder}>Select a film stock…</Text>
+          )}
+          <Text style={styles.chevron}>›</Text>
+        </Pressable>
+      </View>
 
       <Field label="Format">
         <View style={styles.pills}>
@@ -107,6 +138,48 @@ export default function NewRollScreen() {
       <Pressable style={[styles.saveBtn, saving && styles.saveBtnDisabled]} onPress={save} disabled={saving}>
         <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Log Roll'}</Text>
       </Pressable>
+
+      <Modal visible={stockModalVisible} transparent animationType="slide" onRequestClose={() => setStockModalVisible(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setStockModalVisible(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.handle} />
+            <Text style={styles.sheetTitle}>Select Film Stock</Text>
+            <View style={styles.searchRow}>
+              <TextInput
+                style={styles.searchInput}
+                value={stockSearch}
+                onChangeText={setStockSearch}
+                placeholder="Search by name or brand…"
+                placeholderTextColor="#aaa"
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={filteredStocks}
+              keyExtractor={s => String(s.id)}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <Pressable
+                  style={[styles.stockOption, selectedStock?.id === item.id && styles.stockOptionSelected]}
+                  onPress={() => pickStock(item)}
+                >
+                  <View style={styles.stockOptionContent}>
+                    <Text style={[styles.stockOptionName, selectedStock?.id === item.id && styles.stockOptionNameSelected]}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.stockOptionMeta}>ISO {item.iso ?? '?'} · {item.process_name}</Text>
+                  </View>
+                  {selectedStock?.id === item.id && <Text style={styles.checkmark}>✓</Text>}
+                </Pressable>
+              )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No film stocks match your search.</Text>
+              }
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -144,4 +217,47 @@ const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.5 },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+  // Stock trigger
+  stockTrigger: {
+    backgroundColor: '#fff', borderRadius: 10, padding: 14,
+    borderWidth: 1, borderColor: '#e5e7eb',
+    flexDirection: 'row', alignItems: 'center',
+  },
+  stockTriggerEmpty: {},
+  stockInfo: { flex: 1 },
+  stockName: { fontSize: 15, color: '#111', fontWeight: '500' },
+  stockMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  stockPlaceholder: { flex: 1, fontSize: 15, color: '#aaa' },
+  chevron: { fontSize: 20, color: '#9ca3af', lineHeight: 22 },
+
+  // Modal
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingBottom: 40, maxHeight: '80%',
+  },
+  handle: {
+    width: 36, height: 4, backgroundColor: '#d1d5db', borderRadius: 2,
+    alignSelf: 'center', marginTop: 10, marginBottom: 4,
+  },
+  sheetTitle: {
+    fontSize: 15, fontWeight: '700', color: '#111', textAlign: 'center',
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6',
+  },
+  searchRow: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  searchInput: {
+    backgroundColor: '#f9fafb', borderRadius: 8, paddingHorizontal: 12,
+    paddingVertical: 10, fontSize: 15, color: '#111',
+    borderWidth: 1, borderColor: '#e5e7eb',
+  },
+  stockOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20 },
+  stockOptionSelected: { backgroundColor: '#f0fdf4' },
+  stockOptionContent: { flex: 1 },
+  stockOptionName: { fontSize: 15, color: '#111' },
+  stockOptionNameSelected: { fontWeight: '600', color: '#059669' },
+  stockOptionMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  checkmark: { color: '#059669', fontSize: 16, fontWeight: '700' },
+  separator: { height: 1, backgroundColor: '#f3f4f6', marginHorizontal: 16 },
+  emptyText: { textAlign: 'center', color: '#9ca3af', padding: 24, fontSize: 14 },
 });

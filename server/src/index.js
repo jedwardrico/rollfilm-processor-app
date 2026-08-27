@@ -5,6 +5,7 @@ import chemicalsRouter from './routes/chemicals.js';
 import rollsRouter from './routes/rolls.js';
 import proceduresRouter from './routes/procedures.js';
 import statsRouter from './routes/stats.js';
+import filmStocksRouter from './routes/filmStocks.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/processes', processesRouter);
 app.use('/api/chemicals', chemicalsRouter);
+app.use('/api/film-stocks', filmStocksRouter);
 app.use('/api/rolls', rollsRouter);
 app.use('/api/procedures', proceduresRouter);
 app.use('/api/stats', statsRouter);

@@ -53,17 +53,26 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { film_stock, format, process_id, frames, date_shot, notes, binder_location, push_pull } = req.body;
-  if (!film_stock || !format || !process_id) return res.status(400).json({ error: 'film_stock, format, and process_id required' });
+  const { film_stock_id, format, process_id, frames, date_shot, notes, binder_location, push_pull } = req.body;
+  let { film_stock } = req.body;
+
+  if (!format || !process_id) return res.status(400).json({ error: 'format and process_id required' });
+  if (!film_stock_id && !film_stock) return res.status(400).json({ error: 'film_stock or film_stock_id required' });
 
   const process = db.prepare('SELECT * FROM processes WHERE id = ?').get(process_id);
   if (!process) return res.status(400).json({ error: 'Invalid process_id' });
 
+  if (film_stock_id) {
+    const stock = db.prepare('SELECT * FROM film_stocks WHERE id = ?').get(film_stock_id);
+    if (!stock) return res.status(400).json({ error: 'Invalid film_stock_id' });
+    film_stock = film_stock || stock.name;
+  }
+
   const human_id = generateHumanId(process_id);
   const result = db.prepare(`
-    INSERT INTO rolls (human_id, film_stock, format, process_id, frames, date_shot, notes, binder_location, push_pull)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(human_id, film_stock, format, process_id, frames ?? null, date_shot ?? null, notes ?? null, binder_location ?? null, push_pull ?? 0);
+    INSERT INTO rolls (human_id, film_stock, film_stock_id, format, process_id, frames, date_shot, notes, binder_location, push_pull)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(human_id, film_stock, film_stock_id ?? null, format, process_id, frames ?? null, date_shot ?? null, notes ?? null, binder_location ?? null, push_pull ?? 0);
 
   res.status(201).json(db.prepare('SELECT r.*, p.name as process_name FROM rolls r JOIN processes p ON r.process_id = p.id WHERE r.id = ?').get(result.lastInsertRowid));
 });
@@ -72,7 +81,7 @@ router.patch('/:id', (req, res) => {
   const roll = db.prepare('SELECT * FROM rolls WHERE id = ? OR human_id = ?').get(req.params.id, req.params.id);
   if (!roll) return res.status(404).json({ error: 'Not found' });
 
-  const allowed = ['film_stock', 'format', 'frames', 'date_shot', 'date_processed', 'date_scanned', 'status', 'chemical_id', 'procedure_id', 'push_pull', 'notes', 'binder_location'];
+  const allowed = ['film_stock', 'film_stock_id', 'format', 'frames', 'date_shot', 'date_processed', 'date_scanned', 'status', 'chemical_id', 'procedure_id', 'push_pull', 'notes', 'binder_location'];
   const fields = [];
   const values = [];
   for (const key of allowed) {
