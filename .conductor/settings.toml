@@ -11,16 +11,12 @@ setup = "npm install && npm install --prefix server && npm install --prefix app 
 run_mode = "nonconcurrent"
 
 [scripts.run.dev]
-# Full stack: Express server + Expo iOS simulator via root concurrently script.
-# PORT routes CONDUCTOR_PORT to the server; EXPO_PUBLIC_API_URL tells the app where to find it.
-# DB_PATH keeps each workspace's SQLite file isolated under its own workspace path.
 command = "PORT=$CONDUCTOR_PORT EXPO_PUBLIC_API_URL=http://localhost:$CONDUCTOR_PORT DB_PATH=$CONDUCTOR_WORKSPACE_PATH/data/rollfilm.db npm run dev"
 default = true
 available_in = ["local"]
 icon = "play"
 
 [scripts.run.server]
-# Server only — useful when iterating on the API without launching the simulator
 command = "PORT=$CONDUCTOR_PORT DB_PATH=$CONDUCTOR_WORKSPACE_PATH/data/rollfilm.db npm run dev --prefix server"
 available_in = ["local"]
 icon = "server"
