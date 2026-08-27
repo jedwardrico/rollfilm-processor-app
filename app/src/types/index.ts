@@ -36,7 +36,7 @@ export interface Chemical {
   created_at: string;
 }
 
-export type RollStatus = 'shot' | 'processing' | 'processed' | 'scanning' | 'scanned' | 'archived';
+export type RollStatus = 'shot' | 'processed' | 'scanned';
 export type RollFormat = '135' | '120' | '127' | '220' | '4x5' | 'other';
 
 export interface Roll {
