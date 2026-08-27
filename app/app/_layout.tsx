@@ -19,6 +19,8 @@ export default function RootLayout() {
         <Stack.Screen name="chemicals/new" options={{ presentation: 'modal', headerShown: true, title: 'Add Chemical' }} />
         <Stack.Screen name="procedures/new" options={{ presentation: 'modal', headerShown: true, title: 'New Procedure' }} />
         <Stack.Screen name="procedures/[id]" options={{ headerShown: true, title: 'Procedure' }} />
+        <Stack.Screen name="film-stocks/new" options={{ presentation: 'modal', headerShown: true, title: 'Add Film Stock' }} />
+        <Stack.Screen name="film-stocks/[id]" options={{ headerShown: true, title: 'Edit Film Stock' }} />
         <Stack.Screen name="(tabs)/stats" options={{ headerShown: false }} />
       </Stack>
     </>
