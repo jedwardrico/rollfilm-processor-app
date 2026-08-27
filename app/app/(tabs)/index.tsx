@@ -13,25 +13,19 @@ import { Roll, RollStatus } from '../../src/types';
 
 const STATUS_LABELS: Record<RollStatus, string> = {
   shot: 'Needs Processing',
-  processing: 'In Dev',
   processed: 'Needs Scanning',
-  scanning: 'Scanning',
   scanned: 'Done',
-  archived: 'Archived',
 };
 
 const STATUS_COLORS: Record<RollStatus, string> = {
   shot: '#f59e0b',
-  processing: '#3b82f6',
   processed: '#8b5cf6',
-  scanning: '#06b6d4',
   scanned: '#10b981',
-  archived: '#9ca3af',
 };
 
 const FILTERS: { label: string; value: string | undefined }[] = [
   { label: 'All', value: undefined },
-  { label: 'Queue', value: 'shot' },
+  { label: 'Shot', value: 'shot' },
   { label: 'Processed', value: 'processed' },
   { label: 'Scanned', value: 'scanned' },
 ];
@@ -65,7 +59,7 @@ function RollCard({ roll }: { roll: Roll }) {
 
 export default function RollsScreen() {
   const [rolls, setRolls] = useState<Roll[]>([]);
-  const [filter, setFilter] = useState<string | undefined>(undefined);
+  const [filter, setFilter] = useState<string | undefined>('shot');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (statusFilter?: string) => {

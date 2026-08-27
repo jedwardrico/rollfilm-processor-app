@@ -6,14 +6,11 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { api } from '../../src/api/client';
 import { Chemical, Procedure, Roll, RollStatus } from '../../src/types';
 
-const STATUS_SEQUENCE: RollStatus[] = ['shot', 'processing', 'processed', 'scanning', 'scanned', 'archived'];
+const STATUS_SEQUENCE: RollStatus[] = ['shot', 'processed', 'scanned'];
 const STATUS_LABELS: Record<RollStatus, string> = {
   shot: 'Needs Processing',
-  processing: 'In Development',
-  processed: 'Needs Scanning',
-  scanning: 'Scanning',
-  scanned: 'Scanned',
-  archived: 'Archived',
+  processed: 'Processed',
+  scanned: 'Scanned and Archived',
 };
 
 function InfoRow({ label, value }: { label: string; value: string | number | undefined | null }) {
@@ -101,7 +98,7 @@ export default function RollDetailScreen() {
       </View>
 
       {/* Chemical assignment (for unprocessed rolls) */}
-      {(roll.status === 'shot' || roll.status === 'processing') && chemicals.length > 0 && (
+      {roll.status === 'shot' && chemicals.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Chemical Set</Text>
           {chemicals.map(c => (
@@ -117,7 +114,7 @@ export default function RollDetailScreen() {
       )}
 
       {/* Procedure assignment */}
-      {(roll.status === 'shot' || roll.status === 'processing') && procedures.length > 0 && (
+      {roll.status === 'shot' && procedures.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Procedure</Text>
           {procedures.map(p => (
