@@ -78,11 +78,11 @@ router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM procedures WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { name, film_stock, temperature_c, push_pull, notes, steps } = req.body;
+  const { name, process_id, film_stock, temperature_c, push_pull, notes, steps } = req.body;
   db.transaction(() => {
     db.prepare(`
-      UPDATE procedures SET name = ?, film_stock = ?, temperature_c = ?, push_pull = ?, notes = ? WHERE id = ?
-    `).run(name ?? existing.name, film_stock ?? null, temperature_c ?? null, push_pull ?? 0, notes ?? null, req.params.id);
+      UPDATE procedures SET name = ?, process_id = ?, film_stock = ?, temperature_c = ?, push_pull = ?, notes = ? WHERE id = ?
+    `).run(name ?? existing.name, process_id ?? existing.process_id, film_stock ?? null, temperature_c ?? null, push_pull ?? 0, notes ?? null, req.params.id);
     if (Array.isArray(steps)) {
       db.prepare('DELETE FROM procedure_steps WHERE procedure_id = ?').run(req.params.id);
       insertSteps(req.params.id, steps);

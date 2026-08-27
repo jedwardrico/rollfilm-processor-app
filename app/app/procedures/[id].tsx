@@ -91,6 +91,10 @@ export default function ProcedureDetailScreen() {
         <Text style={styles.timerBtnText}>▶ Start Dev Timer</Text>
       </Pressable>
 
+      <Pressable style={styles.editBtn} onPress={() => router.push(`/procedures/edit/${procedure.id}`)}>
+        <Text style={styles.editBtnText}>Edit Procedure</Text>
+      </Pressable>
+
       <Pressable style={styles.deleteBtn} onPress={deleteProcedure}>
         <Text style={styles.deleteBtnText}>Delete Procedure</Text>
       </Pressable>
@@ -135,6 +139,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a', borderRadius: 14, padding: 18, alignItems: 'center',
   },
   timerBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  editBtn: {
+    borderRadius: 14, padding: 16, alignItems: 'center',
+    borderWidth: 1, borderColor: '#d1d5db',
+  },
+  editBtnText: { color: '#374151', fontSize: 15, fontWeight: '600' },
   deleteBtn: {
     borderRadius: 14, padding: 16, alignItems: 'center',
     borderWidth: 1, borderColor: '#fca5a5',

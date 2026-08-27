@@ -143,6 +143,10 @@ export default function RollDetailScreen() {
           </Text>
         </Pressable>
       )}
+
+      <Pressable style={styles.editBtn} onPress={() => router.push(`/rolls/edit/${roll.id}`)}>
+        <Text style={styles.editBtnText}>Edit Roll</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -178,4 +182,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a', borderRadius: 14, padding: 18, alignItems: 'center',
   },
   advanceBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  editBtn: {
+    borderRadius: 14, padding: 16, alignItems: 'center',
+    borderWidth: 1, borderColor: '#d1d5db',
+  },
+  editBtnText: { color: '#374151', fontSize: 15, fontWeight: '600' },
 });
