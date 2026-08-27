@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"server,app\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix server\" \"npm run ios --prefix app\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
