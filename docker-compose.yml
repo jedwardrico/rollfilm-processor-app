@@ -1,0 +1,16 @@
+services:
+  rollfilm-server:
+    build: ./server
+    container_name: rollfilm-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - rollfilm-data:/data
+    environment:
+      - DB_PATH=/data/rollfilm.db
+      - PORT=3000
+    restart: unless-stopped
+
+volumes:
+  rollfilm-data:
+    driver: local
