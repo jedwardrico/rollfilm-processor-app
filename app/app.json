@@ -4,6 +4,9 @@
     "slug": "rollfilm",
     "scheme": "rollfilm",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -25,6 +28,16 @@
     "plugins": [
       "expo-router",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2f92b877-4408-4ca1-b671-3c18b3972cf1"
+      }
+    },
+    "owner": "jedwardrico",
+    "updates": {
+      "url": "https://u.expo.dev/2f92b877-4408-4ca1-b671-3c18b3972cf1"
+    }
   }
 }

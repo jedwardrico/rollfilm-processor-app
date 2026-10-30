@@ -1,7 +1,15 @@
+import Constants from 'expo-constants';
 import { Chemical, FilmStock, Process, Procedure, Roll, Stats } from '../types';
 
-// Update this to your NAS IP/hostname when deploying
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+// Set EXPO_PUBLIC_API_URL to your NAS IP/hostname when deploying. In Expo Go,
+// "localhost" is the phone itself, so fall back to the dev machine that is
+// serving the bundle (same host as Metro, port 3000).
+function defaultBaseUrl(): string {
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  return `http://${host ?? 'localhost'}:3000`;
+}
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? defaultBaseUrl();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {

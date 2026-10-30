@@ -1,5 +1,6 @@
 services:
   rollfilm-server:
+    image: ghcr.io/jedwardrico/rollfilm-server:latest
     build: ./server
     container_name: rollfilm-server
     ports:
