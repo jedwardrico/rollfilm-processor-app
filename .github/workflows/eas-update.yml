@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/eas-update.yml'
+  workflow_dispatch:
 
 concurrency:
   group: eas-update
@@ -38,5 +39,5 @@ jobs:
         env:
           # Inlined into the JS bundle at publish time (repo Settings > Variables)
           EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || format('Manual update ({0})', github.sha) }}
         run: eas update --branch production --message "$COMMIT_MESSAGE" --non-interactive
