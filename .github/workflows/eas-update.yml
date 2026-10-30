@@ -36,5 +36,7 @@ jobs:
 
       - name: Publish update
         env:
+          # Inlined into the JS bundle at publish time (repo Settings > Variables)
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: eas update --branch production --message "$COMMIT_MESSAGE" --non-interactive
